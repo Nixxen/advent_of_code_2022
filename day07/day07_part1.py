@@ -8,92 +8,51 @@ INPUT_FILE = "input_day_07.txt"
 ARGS = []
 
 
-def main_part1(
-    input_file,
-):
-    with open(input_file) as file:
-        lines = list(map(lambda line: line.rstrip(), file.readlines()))
+class Folder:
+    def __init__(self, name: str, parent: "Folder", size: int, is_file=False):
+        self._name = name
+        self._parent = parent
+        self._size = size
+        self._is_file = is_file
+        self._children: list["Folder"] = []
 
-    # The total size of a directory is the sum of the sizes of the files it
-    # contains, directly or indirectly.
+    @property
+    def name(self):
+        return self._name
 
-    # Find all of the directories with a total size of at most 100000. What is
-    # the sum of the total sizes of those directories?
+    @name.setter
+    def name(self, name):
+        self._name = name
 
-    # Example unparsed log:
-    # $ cd /
-    # $ ls
-    # dir a
-    # 14848514 b.txt
-    # 8504156 c.dat
-    # dir d
-    # $ cd a
-    # $ ls
-    # dir e
-    # 29116 f
-    # 2557 g
-    # 62596 h.lst
-    # $ cd e
-    # $ ls
-    # 584 i
-    # $ cd ..
-    # $ cd ..
-    # $ cd d
-    # $ ls
-    # 4060174 j
-    # 8033020 d.log
-    # 5626152 d.ext
-    # 7214296 k
+    @property
+    def parent(self):
+        return self._parent
 
-    class Folder:
-        def __init__(self, name: str, parent: "Folder", size: int, is_file=False):
-            self._name = name
-            self._parent = parent
-            self._size = size
-            self._is_file = is_file
-            self._children: list["Folder"] = []
+    @parent.setter
+    def parent(self, parent):
+        self._parent = parent
 
-        @property
-        def name(self):
-            return self._name
+    @property
+    def size(self):
+        return self._size
 
-        @name.setter
-        def name(self, name):
-            self._name = name
+    def add_size(self, size):
+        self._size += int(size)
 
-        @property
-        def parent(self):
-            return self._parent
+    @property
+    def children(self):
+        return self._children
 
-        @parent.setter
-        def parent(self, parent):
-            self._parent = parent
+    def add_child(self, child):
+        self.children.append(child)
 
-        @property
-        def size(self):
-            return self._size
+    @property
+    def is_file(self):
+        return self._is_file
 
-        def add_size(self, size):
-            self._size += int(size)
-
-        @property
-        def children(self):
-            return self._children
-
-        def add_child(self, child):
-            self.children.append(child)
-
-        @property
-        def is_file(self):
-            return self._is_file
-
-        def __repr__(self):
-            return f"{self.name} {self.parent} {self.size}"
-
-    current_folder: "Folder" = None
-    for line in lines:
-        # Parse the line.
-        line = line.split()
+    @classmethod
+    def parse_line(self, current_folder: "Folder", line_in: str) -> "Folder":
+        line = line_in.split()
         match line[0]:
             case "$":
                 # The line is a command.
@@ -142,6 +101,28 @@ def main_part1(
                 while parent:
                     parent.add_size(size)
                     parent = parent.parent
+        return current_folder
+
+    def __repr__(self):
+        return f"{self.name} {self.parent} {self.size}"
+
+
+def main_part1(
+    input_file,
+):
+    with open(input_file) as file:
+        lines = list(map(lambda line: line.rstrip(), file.readlines()))
+
+    # The total size of a directory is the sum of the sizes of the files it
+    # contains, directly or indirectly.
+
+    # Find all of the directories with a total size of at most 100000. What is
+    # the sum of the total sizes of those directories?
+
+    current_folder: "Folder" | None = None
+    for line in lines:
+        # Parse the line.
+        current_folder = Folder.parse_line(current_folder, line)
 
     while current_folder.parent:
         current_folder = current_folder.parent
