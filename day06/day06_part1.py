@@ -1,5 +1,5 @@
-RUN_TEST = True
-TEST_SOLUTION = ...
+RUN_TEST = False
+TEST_SOLUTION = [7, 5, 6, 10, 11]
 TEST_INPUT_FILE = "test_input_day_06.txt"
 INPUT_FILE = "input_day_06.txt"
 
@@ -12,9 +12,20 @@ def main_part1(
     with open(input_file) as file:
         lines = list(map(lambda line: line.rstrip(), file.readlines()))
 
-    ...
+    # 4 unique characters defines a marker. The character number at the 4th
+    # unique character is the end goal.
 
-    solution = ...
+    # How many characters need to be processed before the first start-of-packet
+    # marker is detected?
+
+    solutions = []
+    for line in lines:
+        for i in range(4, len(line)):
+            if len(set(line[i - 4 : i])) == 4:
+                solutions.append(i)
+                break
+
+    solution = solutions
     return solution
 
 
