@@ -1,5 +1,3 @@
-from collections import defaultdict
-
 RUN_TEST = False
 TEST_SOLUTION = 95437
 TEST_INPUT_FILE = "test_input_day_07.txt"
@@ -121,7 +119,6 @@ def main_part1(
 
     current_folder: "Folder" | None = None
     for line in lines:
-        # Parse the line.
         current_folder = Folder.parse_line(current_folder, line)
 
     while current_folder.parent:
