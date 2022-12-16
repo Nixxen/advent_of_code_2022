@@ -1,5 +1,5 @@
-RUN_TEST = True
-TEST_SOLUTION = ...
+RUN_TEST = False
+TEST_SOLUTION = [19, 23, 23, 29, 26]
 TEST_INPUT_FILE = "test_input_day_06.txt"
 INPUT_FILE = "input_day_06.txt"
 
@@ -12,9 +12,18 @@ def main_part2(
     with open(input_file) as file:
         lines = list(map(lambda line: line.rstrip(), file.readlines()))
 
-    ...
+    # How many characters need to be processed before the first
+    # start-of-message marker is detected?
 
-    solution = ...
+    solutions = []
+    marker = 14
+    for line in lines:
+        for i in range(marker, len(line)):
+            if len(set(line[i - marker : i])) == marker:
+                solutions.append(i)
+                break
+
+    solution = solutions
     return solution
 
 
