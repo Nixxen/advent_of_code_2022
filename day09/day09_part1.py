@@ -7,11 +7,16 @@ ARGS = []
 
 
 class Tail:
-    def __init__(self, position, parent=None):
+    def __init__(self, position, parent=None, tail_limit=1):
         self._position = position
         self._parent = parent
         self._visited: set[tuple] = set()
         self._visited.add(position)
+        self._tail_limit = tail_limit
+        if self.tail_length() < tail_limit:
+            self._next_tail = Tail(position, self, tail_limit)
+        else:
+            self._next_tail = None
 
     @property
     def position(self):
@@ -21,8 +26,17 @@ class Tail:
     def visited(self):
         return self._visited
 
+    @property
+    def next_tail(self):
+        return self._next_tail
+
     def __repr__(self):
         return f"Tail({self.position}, {self.visited})"
+
+    def tail_length(self):
+        if self._parent is None:
+            return 1
+        return 1 + self._parent.tail_length()
 
     def distance(self, target_position):
         return max(
@@ -75,6 +89,8 @@ class Tail:
             else:
                 self.move_cardinally(target_position)
             self._visited.add(self.position)
+            if self._next_tail is not None:
+                self._next_tail.update_position(self.position)
 
 
 def main_part1(
