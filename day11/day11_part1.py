@@ -1,3 +1,5 @@
+from utils import lcm
+
 RUN_TEST = False
 TEST_SOLUTION = 10605
 TEST_INPUT_FILE = "test_input_day_11.txt"
@@ -18,6 +20,7 @@ class Monkey:
         self._worry_level = 0
         self._inspection_count = 0
         self._monkeys = monkey_list
+        self._least_common_multiple = 0
 
     def parse_operation(self, operation: str) -> tuple[str, int]:
         # Operation: new = old operator value
@@ -33,6 +36,16 @@ class Monkey:
         _, value = test.split(" by ")
         return int(value)
 
+    def set_lcm(self, value: int) -> None:
+        self._least_common_multiple = value
+
+    def find_lcm(self) -> None:
+        lcm_it = 1
+        for monkey in self._monkeys:
+            lcm_it = lcm(lcm_it, monkey.test)
+        for monkey in self._monkeys:
+            monkey.set_lcm(lcm_it)
+
     def inspect(self) -> None:
         # Inspect
         self._inspection_count += 1
@@ -45,7 +58,9 @@ class Monkey:
             self._worry_level **= self.op_value
         # Bored
         if self._relief != 1:
-            self._worry_level = self._worry_level // self._relief
+            self._worry_level //= self._relief
+        else:
+            self._worry_level %= self._least_common_multiple
         # Test, is divisible by
         if self._worry_level % self.test == 0:
             # Throw to true
@@ -62,7 +77,7 @@ class Monkey:
         return self._inspection_count
 
     def __str__(self) -> str:
-        return f"Monkey {self._monkeys.index(self)} - Operator: {self.operator} - Op value: {self.op_value} - Test: {self.test} - If true: {self.if_true} - If false: {self.if_false} - Inspection count: {self._inspection_count} - Worry level: {self._worry_level} - Items: {self.items}"
+        return f"Monkey {self._monkeys.index(self)} - Operator: {self.operator} - Op value: {self.op_value} - Test: {self.test} - If true: {self.if_true} - If false: {self.if_false} - Inspection count: {self._inspection_count} - Worry level: {self._worry_level} - LCM: {self._least_common_multiple} Items: {self.items}"
 
 
 def main_part1(
