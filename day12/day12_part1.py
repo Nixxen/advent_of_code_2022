@@ -12,12 +12,15 @@ INFINITY = float("inf")
 
 
 class HillClimber:
-    def __init__(self, lines):
+    def __init__(self, lines, start_x=None, start_y=None):
         self.lines = lines
         self.height = len(lines)
         self.width = len(lines[0])
-        self.start_x, self.start_y = self.get_location("S")
-        self.update_lines(self.start_x, self.start_y, "a")
+        if start_x is None or start_y is None:
+            self.start_x, self.start_y = self.get_location("S")
+            self.lines = self.update_lines(self.start_x, self.start_y, "a", self.lines)
+        else:
+            self.start_x, self.start_y = start_x, start_y
         self.goal_x, self.goal_y = self.get_location("E")
         self.update_lines(self.goal_x, self.goal_y, "z")
         # Distance from start to each location
@@ -33,6 +36,7 @@ class HillClimber:
         self.path_found = False
 
     def get_location(self, target: str):
+        """Return the location of the given character in the map"""
         for x, line in enumerate(self.lines):
             for y, char in enumerate(line):
                 if char == target:
@@ -97,7 +101,7 @@ class HillClimber:
                 if neighbor == (self.goal_x, self.goal_y):
                     self.path_found = True
                     return self.get_path(self.goal_x, self.goal_y)
-        raise ValueError("Could not find a path from start to goal")
+        return []
 
     def get_path(self, x, y):
         """Return the path from start to the given location"""
