@@ -22,12 +22,11 @@ def main_part2(
     calories = 0
     for line in lines:
         if line == "":
-            elf+=1
+            elf += 1
             calories = 0
             continue
         calories += int(line)
         elves_calories[elf] = calories
-
 
     solution = sum(sorted(elves_calories.values(), reverse=True)[:3])
     return solution

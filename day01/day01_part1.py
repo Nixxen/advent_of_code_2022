@@ -20,7 +20,7 @@ def main_part1(
     # various meals, snacks, rations, etc. that they've brought with them, one
     # item per line. Each Elf separates their own inventory from the previous
     # Elf's inventory (if any) by a blank line.
-    
+
     # In case the Elves get hungry and need extra snacks, they need to know
     # which Elf to ask: they'd like to know how many Calories are being carried
     # by the Elf carrying the most Calories.
@@ -33,7 +33,7 @@ def main_part1(
     calories = 0
     for line in lines:
         if line == "":
-            elf+=1
+            elf += 1
             calories = 0
             continue
         calories += int(line)

@@ -36,7 +36,6 @@ def main_part1(
     # What would your total score be if everything goes exactly according to
     # your strategy guide?
 
-
     equivalences = {
         "A": "Rock",
         "B": "Paper",
@@ -53,17 +52,16 @@ def main_part1(
     score = 0
     for line in lines:
         them, me = line.split(" ")
-        if equivalences[them] == equivalences[me]: # Draw
+        if equivalences[them] == equivalences[me]:  # Draw
             score += 3 + scores[equivalences[me]]
         elif (
             (equivalences[them] == "Rock" and equivalences[me] == "Scissor")
             or (equivalences[them] == "Paper" and equivalences[me] == "Rock")
             or (equivalences[them] == "Scissor" and equivalences[me] == "Paper")
-        ): # They win
+        ):  # They win
             score += 0 + scores[equivalences[me]]
-        else: # I win
+        else:  # I win
             score += 6 + scores[equivalences[me]]
-
 
     solution = score
     return solution

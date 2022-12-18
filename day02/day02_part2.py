@@ -39,10 +39,10 @@ def main_part2(
         if equivalences[me] == "Draw":
             score += 3 + scores[equivalences[them]]
         elif equivalences[me] == "Lose":
-            mod_score = (scores[equivalences[them]]-1)%3
+            mod_score = (scores[equivalences[them]] - 1) % 3
             score += 0 + (3 if mod_score == 0 else mod_score)
         elif equivalences[me] == "Win":
-            mod_score = (scores[equivalences[them]]+1)%3
+            mod_score = (scores[equivalences[them]] + 1) % 3
             score += 6 + (3 if mod_score == 0 else mod_score)
 
     solution = score
