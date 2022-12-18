@@ -49,7 +49,7 @@ def is_correct_order(left: list | None, right: list | None) -> int:
     Returns:
         int: 1 if in correct order, 0 if undecided, -1 if in wrong order
     """
-    print(f"left: {left}, right: {right}")
+    # print(f"left: {left}, right: {right}")
     if left is None:
         return 1
     if right is None:
