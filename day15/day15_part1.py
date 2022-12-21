@@ -39,8 +39,7 @@ class BeaconZone:
         """Calculate Manhattan distance between two points"""
         return abs(a[0] - b[0]) + abs(a[1] - b[1])
 
-    def filled_in_row(self, y: int) -> int:
-        """Return the number of signal covered locations in a row"""
+    def merge_ranges_in_row(self, y: int) -> tuple[list[list[int]], set]:
         potential_sensors = []
         blocking_beacons = set()
         x_ranges: list[tuple[int, int]] = []
@@ -59,10 +58,15 @@ class BeaconZone:
         x_ranges.sort()
         merged_ranges: list[list[int]] = [list(x_ranges[0])]
         for x_range in x_ranges[1:]:
-            if x_range[0] <= merged_ranges[-1][1]:
+            if x_range[0] <= merged_ranges[-1][1] + 1:
                 merged_ranges[-1][1] = max(merged_ranges[-1][1], x_range[1])
             else:
                 merged_ranges.append(list(x_range))
+        return merged_ranges, blocking_beacons
+
+    def filled_in_row(self, y: int) -> int:
+        """Return the number of signal covered locations in a row"""
+        merged_ranges, blocking_beacons = self.merge_ranges_in_row(y)
         # Count the number of locations that are not covered by a sensor
         total = 0
         for segment in merged_ranges:
