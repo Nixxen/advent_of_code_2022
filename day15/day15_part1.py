@@ -1,5 +1,4 @@
 import sys
-from collections import defaultdict
 
 RUN_TEST = False
 TEST_SOLUTION = 26
@@ -13,9 +12,7 @@ class BeaconZone:
     def __init__(self, raw_input: list[str]) -> None:
         self.input = raw_input
         self.symbols = {"air": ".", "beacon": "B", "sensor": "S", "signal": "#"}
-        self.grid: defaultdict[tuple, str] = defaultdict(lambda: self.symbols["air"])
-        self.sensors: defaultdict[tuple, tuple] = defaultdict(lambda: (None, None))
-        self.beacons: set[tuple[int, int]] = set()
+        self.sensors: dict[tuple[int, int], tuple[int, int]] = {}
         self.max_x = 0
         self.min_x = sys.maxsize
         self.max_y = 0
@@ -32,46 +29,57 @@ class BeaconZone:
             beacon__x = int(line.split(":")[1].split("=")[1].split(",")[0])
             beacon__y = int(line.split(":")[1].split("=")[2])
             beacon_coord = (beacon__x, beacon__y)
-            self.grid[sensor_coord] = self.symbols["sensor"]
-            self.grid[beacon_coord] = self.symbols["beacon"]
             self.sensors[sensor_coord] = beacon_coord
-            self.beacons.add(beacon_coord)
             self.max_x = max(self.max_x, sensor__x, beacon__x)
             self.min_x = min(self.min_x, sensor__x, beacon__x)
             self.max_y = max(self.max_y, sensor__y, beacon__y)
             self.min_y = min(self.min_y, sensor__y, beacon__y)
 
-    def fill_signal(self):
-        """Fill the signal into the grid using manhattan distance"""
-        for sensor_coord, beacon_coord in self.sensors.items():
-            print(f"Sensor: {sensor_coord}, Beacon: {beacon_coord}")
-            sensor_x, sensor_y = sensor_coord
-            beacon_x, beacon_y = beacon_coord
-            distance = abs(sensor_x - beacon_x) + abs(sensor_y - beacon_y)
-            # Yank efficiency fix?
-            # First quadrant
-            for x in range(sensor_x, sensor_x + distance + 1):
-                for y in range(sensor_y, sensor_y - distance - 1, -1):
-                    if abs(sensor_x - x) + abs(sensor_y - y) > distance:
-                        break
-                    if self.grid[(x, y)] != self.symbols["air"]:
-                        break
-                    self.grid[(x, y)] = self.symbols["signal"]
+    def distance(self, a: tuple[int, int], b: tuple[int, int]) -> int:
+        """Calculate Manhattan distance between two points"""
+        return abs(a[0] - b[0]) + abs(a[1] - b[1])
 
     def filled_in_row(self, y: int) -> int:
-        """Check if a row is filled in"""
-        return sum(
-            1
-            for x in range(self.min_x, self.max_x + 1)
-            if self.grid[(x, y)] == self.symbols["signal"]
-        )
+        """Return the number of signal covered locations in a row"""
+        potential_sensors = []
+        blocking_beacons = set()
+        x_ranges: list[tuple[int, int]] = []
+        for sensor, beacon in self.sensors.items():
+            dist = self.distance(sensor, beacon)
+            if sensor[1] - dist <= y <= sensor[1] + dist:
+                potential_sensors.append(sensor)
+                y_offset = abs(y - sensor[1])
+                x_offset = dist - y_offset
+                x_ranges.append((sensor[0] - x_offset, sensor[0] + x_offset))
+            if beacon[1] == y:
+                blocking_beacons.add(beacon)
+        for beacon in blocking_beacons:
+            x_ranges.append((beacon[1], beacon[1]))
+        # Merge overlapping ranges
+        x_ranges.sort()
+        merged_ranges: list[list[int]] = [list(x_ranges[0])]
+        for x_range in x_ranges[1:]:
+            if x_range[0] <= merged_ranges[-1][1]:
+                merged_ranges[-1][1] = max(merged_ranges[-1][1], x_range[1])
+            else:
+                merged_ranges.append(list(x_range))
+        # Count the number of locations that are not covered by a sensor
+        total = 0
+        for segment in merged_ranges:
+            total += segment[1] - segment[0] + 1
+        return total - len(blocking_beacons)
 
     def __str__(self) -> str:
         """Print the grid"""
         grid_str = ""
         for y in range(self.min_y, self.max_y + 1):
             for x in range(self.min_x, self.max_x + 1):
-                grid_str += self.grid[(x, y)]
+                if (x, y) in self.sensors:
+                    grid_str += self.symbols["sensor"]
+                elif (x, y) in self.sensors.values():
+                    grid_str += self.symbols["beacon"]
+                else:
+                    grid_str += self.symbols["air"]
             grid_str += "\n"
         return grid_str
 
@@ -95,11 +103,8 @@ def main_part1(
 
     print("Building Beacon Zone")
     beacon_zone = BeaconZone(lines)
-    print("Beacon Zone built. Filling signal locations")
+    print("Beacon Zone built. Checking signal values")
     # print(beacon_zone)
-    beacon_zone.fill_signal()
-    print("Signal locations filled, checking solution")
-    print(beacon_zone)
     row = 10 if RUN_TEST else 2000000
     solution = beacon_zone.filled_in_row(row)
     return solution
