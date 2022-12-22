@@ -20,7 +20,7 @@ class Journey:
     ) -> None:
         self.path = path
         self.time_left = time
-        self.visited, self.opened = self._get_state(path)
+        self.visited, self.opened = self._get_state()
         self.complete = False
         self.pressure = 0
         self.valves = valves
@@ -36,15 +36,14 @@ class Journey:
         """
         pressure = 0
         time_left = start_time
-        for action, valve in self.path[1:]:
-            if action == "open":
+        for action, valve in self.path:
+            if action == "enter":
+                time_left -= 1
+            elif action == "open":
                 time_left -= 1
                 pressure += self._find_pressure(self.valves[valve], time_left)
-            elif action == "enter":
-                time_left -= 1
             else:
-                print(f"Invalid action, {action}")
-                pass
+                pass  # Skip start
         return pressure
 
     def _find_pressure(self, valve: "Valve", time_left) -> int:
@@ -56,18 +55,15 @@ class Journey:
         self.complete = True
         self.pressure = self._calculate_pressure(start_time)
 
-    def _get_state(self, path: list[tuple[str, str]]) -> tuple[set[str], set[str]]:
-        """Get the state of the valves based on the given path
-
-        Args:
-            path (list[tuple[str, str]]): List of actions and valves
+    def _get_state(self) -> tuple[set[str], set[str]]:
+        """Get the state of the valves based on the path
 
         Returns:
             tuple[set[str], set[str]]: Visited and opened valves
         """
         visited = set()
         opened = set()
-        for action, valve in path:
+        for action, valve in self.path:
             visited.add(valve)
             if action == "open":
                 opened.add(valve)
@@ -147,36 +143,7 @@ class Spelunker:
             # print(f"Time limit (pressure={journey.pressure}) reached for path {journey.path}")
             return journey
 
-        _, current_valve = journey.path[-1]
-        next_journeys: list["Journey"] = []
-        if not current_valve in journey.opened and self._is_feasible(
-            self.valves[current_valve]
-        ):
-            # Open current valve
-            new_path = list(journey.path)
-            new_path.append(("open", current_valve))
-            new_journey = Journey(new_path, journey.time_left - 1, self.valves)
-            next_journeys.append(new_journey)
-        else:
-            for valve in self.valves.values():
-                if (
-                    valve.valve != current_valve
-                    and self._is_feasible(valve)
-                    and valve.valve not in journey.opened
-                ):
-                    path_to_valve = self._bfs(current_valve, valve.valve)
-                    # print(f"Path to {valve.valve}: {path_to_valve}")
-                    if path_to_valve:
-                        # Extend path with path to valve
-                        path_to_valve.pop(0)
-                        new_path = list(journey.path)
-                        new_path.extend(path_to_valve)
-                        new_journey = Journey(
-                            new_path,
-                            journey.time_left - len(path_to_valve),
-                            self.valves,
-                        )
-                        next_journeys.append(new_journey)
+        next_journeys = self._generate_next_journeys(journey)
 
         if not next_journeys:
             # check if there are unopened feasible valves left
@@ -207,6 +174,39 @@ class Spelunker:
         # Intentionally returning incomplete journey if no best_journey
         return best_journey if best_journey else journey
 
+    def _generate_next_journeys(self, journey: "Journey") -> list["Journey"]:
+        _, current_valve = journey.path[-1]
+        next_journeys: list["Journey"] = []
+        if not current_valve in journey.opened and self._is_feasible(
+            self.valves[current_valve]
+        ):
+            # Open current valve
+            new_path = list(journey.path)
+            new_path.append(("open", current_valve))
+            new_journey = Journey(new_path, journey.time_left - 1, self.valves)
+            next_journeys.append(new_journey)
+        else:
+            for valve in self.valves.values():
+                if (
+                    valve.valve != current_valve
+                    and self._is_feasible(valve)
+                    and valve.valve not in journey.opened
+                ):
+                    path_to_valve = self._bfs(current_valve, valve.valve)
+                    # print(f"Path to {valve.valve}: {path_to_valve}")
+                    if path_to_valve:
+                        # Extend path with path to valve
+                        path_to_valve.pop(0)
+                        new_path = list(journey.path)
+                        new_path.extend(path_to_valve)
+                        new_journey = Journey(
+                            new_path,
+                            journey.time_left - len(path_to_valve),
+                            self.valves,
+                        )
+                        next_journeys.append(new_journey)
+        return next_journeys
+
 
 @dataclass(frozen=True)
 class Valve:
@@ -214,7 +214,8 @@ class Valve:
 
     valve: str
     flow_rate: int
-    tunnels: tuple[str]
+    tunnels: tuple[str, ...]
+    
 
     @classmethod
     def parse(cls, parse_string: str) -> "Valve":
