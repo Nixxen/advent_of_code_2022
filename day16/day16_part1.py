@@ -1,9 +1,10 @@
 import re
+import time
 from collections import deque
 from dataclasses import dataclass
 from functools import total_ordering
 
-RUN_TEST = False
+RUN_TEST = True
 TEST_SOLUTION = 1651
 TEST_INPUT_FILE = "test_input_day_16.txt"
 INPUT_FILE = "input_day_16.txt"
@@ -16,10 +17,10 @@ class Journey:
     """Container class for one individual path and time"""
 
     def __init__(
-        self, path: list[tuple[str, str]], time: int, valves: dict[str, "Valve"]
+        self, path: list[tuple[str, str]], time_left: int, valves: dict[str, "Valve"]
     ) -> None:
         self.path = path
-        self.time_left = time
+        self.time_left = time_left
         self.visited, self.opened = self._get_state()
         self.complete = False
         self.pressure = 0
@@ -215,7 +216,6 @@ class Valve:
     valve: str
     flow_rate: int
     tunnels: tuple[str, ...]
-    
 
     @classmethod
     def parse(cls, parse_string: str) -> "Valve":
@@ -244,7 +244,7 @@ class Valve:
 def main_part1(
     input_file,
 ):
-    with open(input_file) as file:
+    with open(input_file, encoding="utf8") as file:
         lines = list(map(lambda line: line.rstrip(), file.readlines()))
 
     # You estimate it will take you one minute to open a single valve and one
@@ -252,6 +252,16 @@ def main_part1(
 
     # Work out the steps to release the most pressure in 30 minutes. What is
     # the most pressure you can release?
+
+    # New thought:
+    # - Make graph
+    # - Add valves to dict if they have flow rate
+    # - Add edges to graph regardless of flow rate
+    # - Build distances map from each valve to all other valves
+    # - Still use DFS to traverse graph, but use a promising function for
+    #   priority
+    # - Promising function:
+    #   - Order all potential valves by flow rate
 
     valves: dict[str, Valve] = {}
     for line in lines:
@@ -266,11 +276,11 @@ def main_part1(
     print(f"Path: {best_journey.path}")
     if not best_journey.complete:
         raise ValueError(f"Journey not complete, {best_journey}")
-    solution = best_journey.pressure
-    return solution
+    return best_journey.pressure
 
 
 if __name__ == "__main__":
+    start = time.time()
     if RUN_TEST:
         solution = main_part1(TEST_INPUT_FILE, *ARGS)
         print(solution)
@@ -278,3 +288,5 @@ if __name__ == "__main__":
     else:
         solution = main_part1(INPUT_FILE, *ARGS)
         print(solution)
+    end = time.time()
+    print(f"Time taken: {(end-start)*10**3:3f} ms")
