@@ -9,7 +9,7 @@ How tall will the tower be after 1000000000000 rocks have stopped?
 
 from day17_part1 import PyroclasticFlow
 
-RUN_TEST = True
+RUN_TEST = False
 TEST_SOLUTION = 1514285714288
 TEST_INPUT_FILE = "test_input_day_17.txt"
 INPUT_FILE = "input_day_17.txt"
@@ -23,9 +23,15 @@ def main_part2(
     with open(input_file, encoding="utf8") as file:
         lines = list(map(lambda line: line.rstrip(), file.readlines()))
 
+    print(f"Len lines: {len(lines[0])}, lines/rock = {len(lines[0])/5}")
+    # Result is 8 for test data. An integer. Should be able to get a mapping of some
+    # integer, x > 8, looping rocks (absolute min would be 8. But realistically
+    # it is probably much higher)
+
+    # Result is 2018.2 for real data...
+
     pyro = PyroclasticFlow(lines[0])
     pyro.simulate(1000000000000)
-    # pyro.simulate(100000)
 
     return pyro.max_y
 

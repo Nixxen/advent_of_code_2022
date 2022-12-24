@@ -174,10 +174,10 @@ class Rock:
                 break
         return right_coordinates
 
-    def move(self) -> None:
-        """Moves the rock down one unit."""
+    def move(self) -> bool:
+        """Moves the rock down one unit. If rock is unable to move, return false"""
         if not self.active:
-            return
+            return False
 
         lower_coordinate_bounds = self._get_lower_coordinates()
 
@@ -185,9 +185,10 @@ class Rock:
             new_coord = Coordinate.create(coord.x, coord.y - 1)
             if self.grid[new_coord] == "#" or self._is_wall(new_coord):
                 self.active = False
-                return
+                return False
 
         self.coord = Coordinate.create(self.coord.x, self.coord.y - 1)
+        return True
 
     def push_left(self) -> None:
         """Pushes the rock left."""
@@ -242,8 +243,11 @@ class PyroclasticFlow:
     """Main class for the Pyroclastic Flow puzzle.
     Call simulate to solve"""
 
-    def __init__(self, air_flow: str):
+    def __init__(
+        self, air_flow: str, start_offset: "Coordinate" = Coordinate.create(3, 4)
+    ):
         self.air_flow = air_flow
+        self.start_offset = start_offset
         self.walls_x = set([0, 8])
         self.walls_y = set([0])
         self.max_y = 0
@@ -255,64 +259,119 @@ class PyroclasticFlow:
         self.rocks[4] = ["##", "##"]
         self.grid: defaultdict["Coordinate", str] = defaultdict(lambda: ".")
 
-    def spawn_coordinate(self) -> "Coordinate":
+    def _spawn_coordinate(self) -> "Coordinate":
         """Returns the spawn coordinate for the next rock in the grid"""
-        return Coordinate.create(3, self.max_y + 4)  # +1 for offset
+        return self.start_offset + Coordinate.create(0, self.max_y)
+
+    def get_last_n_lines(self, n: int) -> tuple[str, ...]:
+        """Returns the last N lines of the grid"""
+        return tuple(
+            "".join([self.grid[Coordinate.create(x, y)] for x in range(1, 8)])
+            for y in range(self.max_y - n, self.max_y + 1)
+        )
 
     def simulate(self, rocks: int):
         """Simulates the pyroclastic flow."""
         rock_counter = 0
-        rock_is_active = False
         rock = Rock(
             self.grid,
-            self.spawn_coordinate(),
+            self._spawn_coordinate(),
             self.rocks[rock_counter],
             (self.walls_x, self.walls_y),
         )
-        tick = 0
+        flow = 0
         simulating = True
+        cycle_found = False
+        n_lines = 27  # some arbitrary number above 8. Brute forced until test pass
+        previous_states: dict[frozenset[object], tuple[int, int]] = {}
         while simulating:
-            if not rock_is_active:
-                rock = Rock(
-                    self.grid,
-                    self.spawn_coordinate(),
-                    self.rocks[rock_counter % len(self.rocks)],
-                    (self.walls_x, self.walls_y),
+            if not cycle_found:
+                # Check if the cycle has been found:
+                # - Same landing pattern of previous N rocks
+                # - Same new falling rock
+                # - Same jet directions
+                # All of these stored in a state tracking relative coordinates
+                last_n_grid = self.get_last_n_lines(n_lines)
+
+                next_state = frozenset(
+                    tuple(
+                        [
+                            rock_counter % len(self.rocks),  # Next rock index
+                            flow % len(self.air_flow),  # Next jet index
+                            frozenset(last_n_grid),  # Landing pattern over last n lines
+                        ]
+                    )
                 )
-                # print("Spawning new rock")
-                # for row in rock.type:
-                #     print(row)
-                rock_counter += 1
-                rock_is_active = True
 
-            if self.air_flow[tick % len(self.air_flow)] == "<":
-                rock.push_left()
-                # print("Pushing left")
-            elif self.air_flow[tick % len(self.air_flow)] == ">":
-                rock.push_right()
-                # print("Pushing right")
-            rock.move()
+                if next_state in previous_states:
+                    cycle_found = True
+                    rock_counter_old, max_y_old = previous_states[next_state]
+                    cycle_length = rock_counter - rock_counter_old
+                    cycle_height = self.max_y - max_y_old
+                    print(
+                        f"Previous cycle found at rock {rock_counter_old} and new rock {rock_counter}, with delta length {cycle_length}, old height {max_y_old} and delta height {cycle_height}"
+                    )
+                    # Simulate until rocks limit minus partial cycle
+                    skip_cycles = (rocks - rock_counter_old) // cycle_length
+                    rock_counter = rock_counter_old + skip_cycles * cycle_length
+                    self.max_y = max_y_old + skip_cycles * cycle_height
+                    # Paste next states grid into updated grid
+                    for y in range(self.max_y, self.max_y - n_lines, -1):
+                        for x in range(1, 8):
+                            self.grid[Coordinate.create(x, y)] = last_n_grid[
+                                self.max_y - y
+                            ][x - 1]
+                    print(f"Simulating to rock {rock_counter} with height {self.max_y}")
 
-            if not rock.active:
-                # print("Rock is no longer active!")
-                rock_is_active = False
-                self.max_y = max(self.max_y, rock.coord.y + len(rock.type) - 1)
-                for coord in rock.get_coordinates():
-                    self.grid[coord] = "#"
-                if rock_counter >= rocks:
-                    simulating = False
-                    break
-            tick += 1
-
-    def print_grid(self):
-        """Prints the grid."""
-        for y in range(self.max_y + 2, -1, -1):
-            for x in range(max(self.walls_x) + 1):
-                if y in self.walls_y or x in self.walls_x:
-                    print("+", end="")
                 else:
-                    print(self.grid[Coordinate.create(x, y)], end="")
-            print()
+                    previous_states[next_state] = (rock_counter, self.max_y)
+
+            rock = Rock(
+                self.grid,
+                self._spawn_coordinate(),
+                self.rocks[rock_counter % len(self.rocks)],
+                (self.walls_x, self.walls_y),
+            )
+            rock_counter += 1
+
+            while True:  # Simulate rock until it hits something
+                if self.air_flow[flow % len(self.air_flow)] == "<":
+                    rock.push_left()
+                elif self.air_flow[flow % len(self.air_flow)] == ">":
+                    rock.push_right()
+                flow += 1
+                if not rock.move():
+                    break
+
+            self.max_y = max(self.max_y, rock.coord.y + len(rock.type) - 1)
+            for coord in rock.get_coordinates():
+                self.grid[coord] = "#"
+            if rock_counter >= rocks:
+                simulating = False
+
+    def print_grid(self, last_n: int = 0):
+        """Prints the grid.
+
+        Args:
+            last_n (int, optional): Print only the last N lines of the grid. Defaults to 0.
+                If 0, prints the entire grid.
+        """
+        if last_n > 0:
+            for y in range(self.max_y + 2, self.max_y - last_n, -1):
+                for x in range(max(self.walls_x) + 1):
+                    if y in self.walls_y or x in self.walls_x:
+                        print("+", end="")
+                    else:
+                        print(self.grid[Coordinate.create(x, y)], end="")
+                print(" " + str(y))
+        else:
+            for y in range(self.max_y + 2, -1, -1):
+                for x in range(max(self.walls_x) + 1):
+                    if y in self.walls_y or x in self.walls_x:
+                        print("+", end="")
+                    else:
+                        print(self.grid[Coordinate.create(x, y)], end="")
+                print(" " + str(y))
 
 
 def main_part1(
@@ -323,6 +382,7 @@ def main_part1(
 
     pyro = PyroclasticFlow(lines[0])
     pyro.simulate(2022)
+    # print()
     # pyro.print_grid()
 
     return pyro.max_y
