@@ -1,12 +1,18 @@
 """
-Day XX - Part 2
-<<insert problem description
+Day XX - Part 2 
+
+<<insert problem description>>
+
+Reminder for self: To run, use base folder in terminal, 
+    `pythonpath/python.exe -m dayXX.dayXX_part1`
 """
+
+from helpers.measure import measure
 
 RUN_TEST = True
 TEST_SOLUTION = ...
-TEST_INPUT_FILE = "test_input_day_XX.txt"
-INPUT_FILE = "input_day_XX.txt"
+TEST_INPUT_FILE = "dayXX/test_input_day_XX.txt"
+INPUT_FILE = "dayXX/input_day_XX.txt"
 
 ARGS = []
 
