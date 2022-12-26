@@ -11,16 +11,32 @@ droplet but never expanding diagonally.
 What is the exterior surface area of your scanned lava droplet?
 """
 
-from day18_part1 import BoilingBoulders, Coordinate3d
+import sys
+
+from day18.day18_part1 import BoilingBoulders, Coordinate3d
+
+print(
+    "In module sys.path[0], __package__, __name__ ==",
+    sys.path[0],
+    __package__,
+    __name__,
+)
+
+import os
+
+print("In module os.getcwd() ==", os.getcwd())
+
+from helpers.measure import measure
 
 RUN_TEST = False
 TEST_SOLUTION = 58
-TEST_INPUT_FILE = "test_input_day_18.txt"
-INPUT_FILE = "input_day_18.txt"
+TEST_INPUT_FILE = "day18/test_input_day_18.txt"
+INPUT_FILE = "day18/input_day_18.txt"
 
 ARGS = []
 
 
+@measure
 def main_part2(
     input_file,
 ):
