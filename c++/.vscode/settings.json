@@ -1,6 +1,13 @@
 {
     "files.associations": {
         "string": "cpp",
-        "vector": "cpp"
-    }
+        "vector": "cpp",
+        "iostream": "cpp"
+    },
+    "[cpp]": {
+        "editor.tabSize": 4,
+        "editor.insertSpaces": true,
+        "editor.formatOnSave": true,
+        "editor.formatOnSaveMode": "modifications",
+    },
 }

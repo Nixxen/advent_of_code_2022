@@ -21,8 +21,9 @@
                 "/Zi",
                 "/EHsc",
                 "/nologo",
-                "/Fe${fileDirname}\\${fileBasenameNoExtension}.exe",
-                "${file}"
+                "/Fe${fileDirname}\\bin\\${fileBasenameNoExtension}.exe",
+                "${file}",
+                "Filereader.cpp"
             ],
             "options": {
                 "cwd": "${fileDirname}"

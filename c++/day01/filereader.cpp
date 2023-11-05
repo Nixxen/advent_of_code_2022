@@ -28,6 +28,10 @@ int Filereader::read_file(const char* filename) {
     filedata = new char[filesize];
     file.read(filedata, filesize);
     file.close();
+
+    // Ensure null-termination
+    filedata[filesize] = '\0';
+
     return 0;
 }
 

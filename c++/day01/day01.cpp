@@ -4,38 +4,32 @@
 #include <sstream>
 #include "filereader.h"
 
-
-using namespace std;
-
 int main()
 {
     // Read file
     Filereader fr;
-    int result = fr.read_file("input.txt");
-    if (result != 0) {
-        cerr << "Error reading file" << endl;
+    int result = fr.read_file("day01_input.txt");
+    if (result != 0)
+    {
+        std::cerr << "Error reading file" << std::endl;
         return -1;
     }
     int filesize = fr.get_filesize();
-    char* filedata = fr.get_filedata();
+    char *filedata = fr.get_filedata();
 
-    // Parse filedata
-    vector<int> numbers;
-    stringstream ss;
+    // Find the Elf carrying the most Calories. How many total Calories is that Elf carrying?
+    // Using newline to separate the data
+    int mostCalories = 0;
 
-    for (int i = 0; i < filesize; i++) {
-        if (filedata[i] == '\n') {
-            numbers.push_back(stoi(ss.str()));
-            ss.str("");
-        } else {
-            ss << filedata[i];
-        }
+    // Using stringstream to separate the data
+    std::stringstream ss(filedata);
+    std::string line;
+    while (std::getline(ss, line))
+    {
+        int calories = std::stoi(line);
+        mostCalories += calories;
     }
-
-    // Print 
-    for (int i = 0; i < numbers.size(); i++) {
-        cout << numbers[i] << endl;
-    }
+    std::cout << "The Elf carrying the most Calories is carrying " << mostCalories << " Calories." << std::endl;
 
     return 0;
 }
